@@ -359,7 +359,7 @@ display:
 
       int datetime_x = 12;
       int date_y = 4;
-      int time_y = 19;
+      int time_y = 21;
 
       // --- Top bar: Date, Time (left) and WiFi (right) ---
       auto time = id(current_time).now();
@@ -397,10 +397,10 @@ display:
       int col2 = w / 2 + 6;
       int row1 = 54;
       int row2 = 110;
-      int text_offset = 24;
+      int text_offset = 26;
       int value_y_offset = 17;
       int value_x_offset = 4;
-      int icon_y_offset = -5;  // Move icons up to align top with label
+      int icon_y_offset = -3;  // Move icons up to align top with label
 
       // Trend icons: up = \U000F09C4, down = \U000F09C1
       // Returns trend icon string (empty if no significant change)
@@ -491,13 +491,4 @@ font:
       - "\U000F050F"  # mdi:thermometer
       - "\U000F058E"  # mdi:water-percent
       - "\U000F0D43"  # mdi:air-purifier
-      - "\U000F09C4"  # mdi:arrow-top-right-thick
-      - "\U000F09C1"  # mdi:arrow-bottom-right-thick
 
-  # Smaller trend icons
-  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
-    id: font_trend
-    size: 16
-    glyphs:
-      - "\U000F09C4"  # mdi:arrow-top-right-thick
-      - "\U000F09C1"  # mdi:arrow-bottom-right-thick
