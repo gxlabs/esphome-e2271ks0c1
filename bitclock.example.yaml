@@ -402,12 +402,12 @@ display:
       int value_x_offset = 4;
       int icon_y_offset = -3;  // Move icons up to align top with label
 
-      // Trend icons: up = \U000F09C4, down = \U000F09C1
+      // Trend icons: up = \U000F005D, down = \U000F0045
       // Returns trend icon string (empty if no significant change)
       auto get_trend = [&](float current, float previous, float threshold) -> const char* {
         if (isnan(previous) || isnan(current)) return "";
-        if (current > previous + threshold) return "\U000F09C4";  // arrow-top-right-thick
-        if (current < previous - threshold) return "\U000F09C1";  // arrow-bottom-right-thick
+        if (current > previous + threshold) return "\U000F005D";  // arrow-up
+        if (current < previous - threshold) return "\U000F0045";  // arrow-down
         return "";
       };
 
@@ -474,8 +474,8 @@ font:
     extras:
       - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
         glyphs:
-          - "\U000F09C4"  # mdi:arrow-top-right-thick
-          - "\U000F09C1"  # mdi:arrow-bottom-right-thick
+          - "\U000F005D"  # mdi:arrow-up
+          - "\U000F0045"  # mdi:arrow-down
 
   # Material Design Icons
   - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
