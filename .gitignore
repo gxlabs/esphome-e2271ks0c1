@@ -1,0 +1,19 @@
+.DS_Store
+*.log
+
+# Local env
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ESPHome / PlatformIO
+.esphome/
+.pio/
