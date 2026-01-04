@@ -58,6 +58,10 @@ globals:
     type: bool
     restore_value: true
     initial_value: 'false'
+  - id: show_sensor_labels
+    type: bool
+    restore_value: true
+    initial_value: 'true'
   - id: show_setup_screen
     type: bool
     initial_value: 'false'
@@ -108,8 +112,11 @@ script:
           if (id(ha_time_24h).has_state()) {
             id(time_24h) = id(ha_time_24h).state;
           }
-          ESP_LOGI("settings", "Synced from HA: dark=%d, fahrenheit=%d, 24h=%d",
-                   id(dark_mode), id(temp_fahrenheit), id(time_24h));
+          if (id(ha_show_sensor_labels).has_state()) {
+            id(show_sensor_labels) = id(ha_show_sensor_labels).state;
+          }
+          ESP_LOGI("settings", "Synced from HA: dark=%d, fahrenheit=%d, 24h=%d, labels=%d",
+                   id(dark_mode), id(temp_fahrenheit), id(time_24h), id(show_sensor_labels));
       - component.update: epd
 
 # Update previous values for trend tracking every 5 minutes
@@ -141,6 +148,11 @@ binary_sensor:
   - platform: homeassistant
     id: ha_time_24h
     entity_id: switch.bitclock_24_hour_time
+    internal: true
+
+  - platform: homeassistant
+    id: ha_show_sensor_labels
+    entity_id: switch.bitclock_show_sensor_labels
     internal: true
 
 # -------------------
@@ -198,6 +210,24 @@ switch:
     turn_off_action:
       - globals.set:
           id: time_24h
+          value: 'false'
+      - lambda: 'id(epd).force_full_update();'
+      - component.update: epd
+
+  - platform: template
+    name: "Show Sensor Labels"
+    id: show_sensor_labels_switch
+    icon: "mdi:format-text"
+    lambda: 'return id(show_sensor_labels);'
+    turn_on_action:
+      - globals.set:
+          id: show_sensor_labels
+          value: 'true'
+      - lambda: 'id(epd).force_full_update();'
+      - component.update: epd
+    turn_off_action:
+      - globals.set:
+          id: show_sensor_labels
           value: 'false'
       - lambda: 'id(epd).force_full_update();'
       - component.update: epd
@@ -358,23 +388,22 @@ display:
       it.fill(bg);
 
       int datetime_x = 12;
-      int date_y = 4;
-      int time_y = 19;
+      int date_y = 8;
+      int time_x = w - 36;
 
-      // --- Top bar: Date, Time (left) and WiFi (right) ---
+      // --- Top bar: Date (left), Time (right), WiFi (right) ---
       auto time = id(current_time).now();
       if (time.is_valid()) {
-        // Date on top line
+        // Date and time on the same line
         it.strftime(datetime_x, date_y, id(font_datetime), fg, "%a, %b %d", time);
-        // Time below
         if (id(time_24h)) {
-          it.strftime(datetime_x, time_y, id(font_datetime), fg, "%H:%M", time);
+          it.strftime(time_x, date_y, id(font_datetime), fg, TextAlign::TOP_RIGHT, "%H:%M", time);
         } else {
-          it.strftime(datetime_x, time_y, id(font_datetime), fg, "%l:%M%P", time);
+          it.strftime(time_x, date_y, id(font_datetime), fg, TextAlign::TOP_RIGHT, "%l:%M%P", time);
         }
       } else {
         it.print(datetime_x, date_y, id(font_datetime), fg, "---");
-        it.print(datetime_x, time_y, id(font_datetime), fg, "--:--");
+        it.print(time_x, date_y, id(font_datetime), fg, TextAlign::TOP_RIGHT, "--:--");
       }
 
       // WiFi strength icon (top right, vertically centered)
@@ -397,10 +426,11 @@ display:
       int col2 = w / 2 + 6;
       int row1 = 54;
       int row2 = 110;
+      bool show_labels = id(show_sensor_labels);
       int text_offset = 24;
       int value_y_offset = 17;
       int value_x_offset = 4;
-      int icon_y_offset = -5;  // Move icons up to align top with label
+      int icon_y_offset = -5;
 
       // Trend icons: up = \U000F09C4, down = \U000F09C1
       // Returns trend icon string (empty if no significant change)
@@ -413,27 +443,36 @@ display:
 
       // Temperature (top left)
       it.print(col1, row1 + icon_y_offset, id(font_icons), fg, "\U000F050F");  // thermometer
-      it.printf(col1 + text_offset, row1, id(font_label), fg, "TEMP %s", get_trend(id(temperature).state, id(prev_temperature), 0.3f));
+      if (show_labels) {
+        it.printf(col1 + text_offset, row1, id(font_label), fg, "TEMP %s",
+                  get_trend(id(temperature).state, id(prev_temperature), 0.3f));
+      }
       if (!isnan(id(temperature).state)) {
         bool use_f = id(temp_fahrenheit);
         float temp = use_f ? (id(temperature).state * 9.0f / 5.0f) + 32.0f : id(temperature).state;
-        it.printf(col1 + value_x_offset, row1 + value_y_offset, id(font_value), fg, use_f ? "%.0f°f" : "%.0f°c", temp);
+        it.printf(col1 + value_x_offset, row1 + value_y_offset, id(font_value), fg, use_f ? "%.0f°F" : "%.0f°C", temp);
       } else {
         it.print(col1 + value_x_offset, row1 + value_y_offset, id(font_value), fg, "--");
       }
 
       // CO2 (top right)
       it.print(col2, row1 + icon_y_offset, id(font_icons), fg, "\U000F07E4");  // molecule-co2
-      it.printf(col2 + text_offset, row1, id(font_label), fg, "CO2 %s", get_trend(id(co2).state, id(prev_co2), 20.0f));
+      if (show_labels) {
+        it.printf(col2 + text_offset, row1, id(font_label), fg, "CO2 %s",
+                  get_trend(id(co2).state, id(prev_co2), 20.0f));
+      }
       if (!isnan(id(co2).state)) {
-        it.printf(col2 + value_x_offset, row1 + value_y_offset, id(font_value), fg, "%.0fppm", id(co2).state);
+        it.printf(col2 + value_x_offset, row1 + value_y_offset, id(font_value), fg, "%.0f ppm", id(co2).state);
       } else {
         it.print(col2 + value_x_offset, row1 + value_y_offset, id(font_value), fg, "--");
       }
 
       // Humidity (bottom left)
       it.print(col1, row2 + icon_y_offset, id(font_icons), fg, "\U000F058E");  // water-percent
-      it.printf(col1 + text_offset, row2, id(font_label), fg, "HUMIDITY %s", get_trend(id(humidity).state, id(prev_humidity), 2.0f));
+      if (show_labels) {
+        it.printf(col1 + text_offset, row2, id(font_label), fg, "HUMIDITY %s",
+                  get_trend(id(humidity).state, id(prev_humidity), 2.0f));
+      }
       if (!isnan(id(humidity).state)) {
         it.printf(col1 + value_x_offset, row2 + value_y_offset, id(font_value), fg, "%.0f%%", id(humidity).state);
       } else {
@@ -442,9 +481,12 @@ display:
 
       // VOC (bottom right)
       it.print(col2, row2 + icon_y_offset, id(font_icons), fg, "\U000F0D43");  // air-purifier
-      it.printf(col2 + text_offset, row2, id(font_label), fg, "VOC %s", get_trend(id(voc).state, id(prev_voc), 5.0f));
+      if (show_labels) {
+        it.printf(col2 + text_offset, row2, id(font_label), fg, "VOC %s",
+                  get_trend(id(voc).state, id(prev_voc), 5.0f));
+      }
       if (!isnan(id(voc).state)) {
-        it.printf(col2 + value_x_offset, row2 + value_y_offset, id(font_value), fg, "%.0fidx", id(voc).state);
+        it.printf(col2 + value_x_offset, row2 + value_y_offset, id(font_value), fg, "%.0f idx", id(voc).state);
       } else {
         it.print(col2 + value_x_offset, row2 + value_y_offset, id(font_value), fg, "--");
       }
@@ -457,7 +499,7 @@ font:
   # Date/time display
   - file: "gfonts://Roboto@500"
     id: font_datetime
-    size: 18
+    size: 24
     glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789, -:"
 
   # Value display - numbers and units

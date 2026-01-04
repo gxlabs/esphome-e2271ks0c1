@@ -123,6 +123,7 @@ See [bitclock.example.yaml](https://github.com/gxlabs/esphome-e2271ks0c1/blob/ma
 - Time display (12h/24h configurable)
 - WiFi signal strength icon
 - CO2, temperature, humidity, and VOC sensor readings
+- Toggleable sensor labels (icons-only mode)
 - Material Design Icons
 - Dark mode toggle
 
@@ -137,9 +138,10 @@ The example uses substitutions for easy configuration:
 
 ```yaml
 substitutions:
-  dark_mode: "true"       # White text on black background
-  time_24h: "false"       # 12-hour time format
-  temp_fahrenheit: "true" # Temperature in Fahrenheit
+  dark_mode: "true"           # White text on black background
+  time_24h: "false"           # 12-hour time format
+  temp_fahrenheit: "true"     # Temperature in Fahrenheit
+  show_sensor_labels: "true"  # Show TEMP/CO2/HUMIDITY/VOC labels
 ```
 
 ## Hardware
