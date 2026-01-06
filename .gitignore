@@ -4,6 +4,7 @@
 # Local env
 .env
 .env.*
+secrets.yaml
 
 # IDEs
 .vscode/
