@@ -97,7 +97,9 @@ bool E2271KS0C1::transfer_data() {
   }
 
   // Temperature and panel configuration
-  uint8_t ts = encode_temp_tsset(this->temperature_c_, fast);
+  // Ported from https://github.com/goat-hill/bitclock/blob/c06e1b5c1ea5e7673b5b4e85a27384f967de3ef7/bitclock-fw/main/tasks/sht4x.c#L148-L164
+  float temp_c_enclosure_offset = this->temperature_c_ * 0.022f - 4.08f;
+  uint8_t ts = encode_temp_tsset(this->temperature_c_ + temp_c_enclosure_offset, fast);
   this->cmd_data(ADDR_INPUT_TEMP, &ts, 1);
 
   uint8_t at = 0x02;
